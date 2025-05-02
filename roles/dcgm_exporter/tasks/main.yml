@@ -7,11 +7,11 @@
 
 - name: 顯示 NVIDIA 驅動狀態
   debug:
-    msg: "NVIDIA 驅動{{ '已安裝' if nvidia_driver_check.rc == 0 else '未安裝' }}"
+    msg: NVIDIA 驅動{{ '已安裝' if nvidia_driver_check.rc == 0 else '未安裝' }}
 
 - name: 確認 NVIDIA 驅動已安裝
   fail:
-    msg: "請先安裝 NVIDIA 驅動程序"
+    msg: 請先安裝 NVIDIA 驅動程序
   when: nvidia_driver_check.rc != 0
 
 - name: 檢查 pip3 是否已安裝
@@ -34,6 +34,9 @@
   changed_when: false
 
 - name: 安裝 Docker (Debian/Ubuntu)
+  when:
+    - ansible_os_family == "Debian"
+    - docker_check.rc != 0
   block:
     - name: 添加 Docker 儲存庫公鑰
       apt_key:
@@ -42,12 +45,12 @@
 
     - name: 添加 Docker 儲存庫
       apt_repository:
-        repo: "deb [arch=amd64] https://download.docker.com/linux/{{ ansible_distribution | lower }} {{ ansible_distribution_release }} stable"
+        repo: deb [arch=amd64] https://download.docker.com/linux/{{ ansible_distribution | lower }} {{ ansible_distribution_release }} stable
         state: present
 
     - name: 安裝 Docker 套件
       apt:
-        name: 
+        name:
           - docker-ce
           - docker-compose
         state: present
@@ -56,9 +59,7 @@
       pip:
         name: docker
         executable: pip3
-  when: 
-    - ansible_os_family == "Debian"
-    - docker_check.rc != 0
+
 
 - name: 安裝 NVIDIA Container Toolkit (Debian/Ubuntu)
   block:
@@ -67,29 +68,29 @@
         url: https://nvidia.github.io/libnvidia-container/gpgkey
         state: present
       when: ansible_os_family == "Debian"
-      
+
     - name: 添加 NVIDIA Container Toolkit 儲存庫
       get_url:
-        url: "https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list"
+        url: https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list
         dest: /etc/apt/sources.list.d/nvidia-container-toolkit.list
         mode: '0644'
       when: ansible_os_family == "Debian"
-        
+
     - name: 更新 apt 套件索引
       apt:
         update_cache: yes
       when: ansible_os_family == "Debian"
-        
+
     - name: 安裝 NVIDIA Container Toolkit
       apt:
         name:
           - nvidia-container-toolkit
         state: present
       when: ansible_os_family == "Debian"
-        
+
     - name: 重新配置 Docker 以支援 NVIDIA Container Runtime
       command: nvidia-ctk runtime configure --runtime=docker
-      
+
     - name: 重新啟動 Docker 服務以套用 NVIDIA Container Runtime 配置
       systemd:
         name: docker
@@ -108,7 +109,7 @@
     mode: 0755
 
 - name: 拉取 DCGM-Exporter Docker 映像
-  docker_image:
+  community.general.docker_image:
     name: "{{ dcgm_exporter_image }}"
     source: pull
     force_source: yes
@@ -121,10 +122,10 @@
 - name: 移除現有的 DCGM-Exporter 容器
   command: docker rm -f dcgm-exporter
   when: dcgm_exporter_container.stdout != ""
-  ignore_errors: true
+  failed_when: false
 
 - name: 運行 DCGM-Exporter Docker 容器
-  docker_container:
+  community.docker.docker_container:
     name: dcgm-exporter
     image: "{{ dcgm_exporter_image }}"
     restart_policy: unless-stopped
@@ -133,7 +134,7 @@
     capabilities:
       - SYS_ADMIN
     published_ports:
-      - "9400:9400"
+      - 9400:9400
 
 - name: Drop other traffic
   ansible.builtin.iptables:
@@ -154,7 +155,6 @@
     jump: ACCEPT
     state: present
   loop: "{{ dcgm_exporter_firewall_allow_from }}"
-
 
 
 - name: 啟動 Docker 服務

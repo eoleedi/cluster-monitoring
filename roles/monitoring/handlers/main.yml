@@ -1,5 +1,5 @@
 ---
-- name: restart monitoring stack
+- name: Restart monitoring stack
   community.docker.docker_compose_v2:
     project_src: "{{ monitoring_data_dir }}"
     files:
@@ -10,6 +10,6 @@
     build: never                 # build local images if you have a build: section
     remove_orphans: true         # clean up any stray containers
 
-- name: reload ufw
-  shell: ufw reload
+- name: Reload ufw
+  ansible.builtin.command: ufw reload
   when: ansible_os_family == "Debian"

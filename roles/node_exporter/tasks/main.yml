@@ -11,14 +11,15 @@
     shell: /bin/false
     home: /var/lib/node_exporter
     create_home: no
-    comment: "Node Exporter User"
+    comment: Node Exporter User
 
 - name: 下載並安裝 Node Exporter
   when: not node_exporter_installed.stat.exists
   block:
     - name: 下載 Node Exporter 二進制檔案
       get_url:
-        url: https://github.com/prometheus/node_exporter/releases/download/v{{ node_exporter_version }}/node_exporter-{{ node_exporter_version }}.linux-amd64.tar.gz
+        url: |
+          https://github.com/prometheus/node_exporter/releases/download/v{{node_exporter_version}}/node_exporter-{{node_exporter_version}}.linux-amd64.tar.gz
         dest: /tmp/node_exporter-{{ node_exporter_version }}.linux-amd64.tar.gz
         mode: 0644
 
@@ -51,6 +52,7 @@
     dest: /etc/systemd/system/node_exporter.service
     mode: 0644
   register: node_exporter_service_file
+  notify: reload systemd
 
 - name: 創建 Node Exporter 配置資料夾
   file:
@@ -70,11 +72,6 @@
     owner: node_exporter
     group: node_exporter
   notify: restart node_exporter
-
-- name: 重新載入 Systemd 配置
-  when: node_exporter_service_file.changed
-  systemd:
-    daemon_reload: yes
 
 - name: 啟用並啟動 Node Exporter 服務
   systemd:
@@ -117,7 +114,7 @@
 - name: 啟用 UFW 防火牆 (如果未啟用)
   community.general.ufw:
     state: enabled
-  when: 
+  when:
     - ansible_os_family == "Debian"
   notify: reload ufw
 
@@ -129,4 +126,3 @@
   debug:
     msg: "Node Exporter 服務狀態: {{ service_state.ansible_facts.services['node_exporter.service'].state }}"
   when: "'node_exporter.service' in service_state.ansible_facts.services"
-

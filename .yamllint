@@ -1,0 +1,32 @@
+---
+# 用於 yamllint 的自定義規則，適合 Ansible 專案
+
+extends: default
+
+rules:
+  # 允許較長的行，因為 Ansible 經常有長變數名稱和模板
+  line-length:
+    max: 160
+    level: warning
+  # 允許在 YAML 注釋中使用 # 符號而不需要空格
+  comments:
+    min-spaces-from-content: 1
+  # 允許在文檔中使用空檔案
+  empty-lines:
+    max: 2
+    max-start: 1
+    max-end: 1
+  # 設定縮排規則
+  indentation:
+    spaces: 2
+    indent-sequences: consistent
+  # 允許使用 True/False 作為布林值
+  truthy:
+    allowed-values: ['true', 'false', 'yes', 'no', 'True', 'False']
+  # 允許在冒號後使用多個空格
+  colons:
+    max-spaces-after: 4
+  # 放寬引號使用規則
+  quoted-strings:
+    quote-type: any
+    required: only-when-needed

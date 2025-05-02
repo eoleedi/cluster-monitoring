@@ -1,0 +1,32 @@
+---
+# Ansible-lint 配置文件
+# https://ansible-lint.readthedocs.io/en/latest/configuring/
+
+# 排除不需要檢查的路徑
+exclude_paths:
+  - .git/
+  - group_vars/monitoring/vault.yml
+  - inventory/
+  - '*.example'
+
+# 啟用的規則列表
+enable_list:
+  - fqcn-builtins  # 使用完整的集合名稱
+  - no-log-password  # 禁止記錄密碼
+  - no-same-owner  # 檢查文件所有者
+
+# 禁用特定規則
+skip_list:
+  - yaml[line-length]  # 已在 yamllint 中設定
+  - jinja[spacing]  # Jinja2 模板引擎的空格規則
+  - name[missing]  # 某些任務可能沒有 name 屬性
+  - fqcn[action-core]
+
+# 警告而非失敗的規則
+warn_list:
+  - command-instead-of-module  # 使用命令而不是模組
+  - no-changed-when  # 缺少 changed_when
+  - experimental  # 實驗性功能
+
+# 設定複雜性限制
+max_block_depth: 5

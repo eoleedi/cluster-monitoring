@@ -1,0 +1,38 @@
+---
+repos:
+  # YAML 語法檢查和格式化
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-added-large-files
+      - id: check-merge-conflict
+      - id: detect-private-key
+
+  # YAML 文件格式化
+  - repo: https://github.com/adrienverge/yamllint
+    rev: v1.37.0
+    hooks:
+      - id: yamllint
+        args: [--format, parsable, --strict]
+        files: \.(yaml|yml)$
+
+  # Ansible 專用靜態檢查
+  - repo: https://github.com/ansible/ansible-lint
+    rev: v25.4.0
+    hooks:
+      - id: ansible-lint
+        files: \.(yaml|yml)$
+        exclude: ^(inventory/|group_vars/monitoring/vault\.yml|.*\.example)$
+
+  # Ansible 變數和路徑檢查
+  - repo: local
+    hooks:
+      - id: check-ansible-vars
+        name: Check Ansible variable references
+        entry: bash -c 'grep -r "{{[^{]" --include="*.yml" --include="*.yaml" . || true'
+        language: system
+        pass_filenames: false
+        always_run: true

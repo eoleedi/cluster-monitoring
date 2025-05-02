@@ -72,13 +72,30 @@ cluster-monitoring/
         ```
 
 - 安裝passlib:
-  
+
   ```bash
     /home/<username>/.local/pipx/venvs/ansible-core/bin/pip3 install passlib
   ```
 
 - 目標伺服器為 Linux 系統 (Debian/Ubuntu)
 - 監控伺服器上有足夠的存儲空間用於 Prometheus 數據
+- 開發環境需要有 Python 3.x 和 pip (用於 pre-commit 檢查)
+
+### 開發環境設置
+
+開發此專案需要安裝 pre-commit 工具來進行程式碼檢查和格式化：
+
+```bash
+# 安裝 pre-commit
+pip install pre-commit
+
+# 在專案資料夾中安裝 git hooks
+cd cluster-monitoring
+pre-commit install
+
+# 可以手動運行檢查所有檔案
+pre-commit run --all-files
+```
 
 ## 安裝步驟
 
@@ -211,6 +228,53 @@ Note: 這邊會要求輸入 sudo 密碼和 vault 密碼。
 
 編輯 `roles/monitoring/files/docker-compose.yml` 添加 AlertManager 服務，並相應地更新 Prometheus 配置。
 
+## 程式碼品質控制
+
+本專案使用了多種工具來確保程式碼品質和一致性：
+
+### Pre-commit 鉤子
+
+pre-commit 工具在每次 git commit 之前自動執行以下檢查：
+
+1. **基本格式檢查**：
+   - 移除行末空格
+   - 確保文件以空行結束
+   - 檢查 YAML 語法
+   - 檢查大型文件
+   - 檢測合併衝突
+   - 檢測私鑰洩漏
+
+2. **YAML 格式檢查**：
+   - 使用 yamllint 檢查 YAML 文件格式
+   - 設置了適合 Ansible 專案的自訂規則
+
+3. **Ansible 程式碼檢查**：
+   - 使用 ansible-lint 檢查 Ansible 最佳實踐
+   - 檢查變數引用格式
+   - 檢查危險的 shell 指令
+   - 檢查密碼安全性
+
+### 手動運行檢查
+
+除了提交時自動執行外，您也可以手動運行檢查：
+
+```bash
+# 檢查所有檔案
+pre-commit run --all-files
+
+# 檢查特定檔案
+pre-commit run --files path/to/file.yml
+
+# 跳過某些檢查
+SKIP=ansible-lint pre-commit run
+```
+
+### 配置檔案
+
+- `.pre-commit-config.yaml`: 定義了 git pre-commit 鉤子的配置
+- `.yamllint`: 自訂的 YAML 格式規則，適合 Ansible 專案
+- `.ansible-lint`: Ansible Lint 的配置，設定了特定的規則
+
 ## 安全注意事項
 
 本監控系統已實施以下安全增強措施：
@@ -222,7 +286,7 @@ Note: 這邊會要求輸入 sudo 密碼和 vault 密碼。
   ```bash
   # 加密 vault.yml 文件
   ansible-vault encrypt group_vars/monitoring/vault.yml
-  
+
   # 執行部署時提供 vault 密碼
   ansible-playbook site.yml --ask-vault-pass
   ```
@@ -235,7 +299,7 @@ Note: 這邊會要求輸入 sudo 密碼和 vault 密碼。
   ```yaml
   # 在 group_vars/all.yml 中設定
   node_exporter_web_listen_address: "127.0.0.1:9100"
-  node_exporter_firewall_allow_from: 
+  node_exporter_firewall_allow_from:
     - "{{ hostvars[groups['monitoring'][0]].ansible_host }}"
   ```
 

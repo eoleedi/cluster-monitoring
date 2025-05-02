@@ -170,4 +170,3 @@
     - "{{ prometheus_port }}"
     - "{{ grafana_port }}"
   when: ansible_os_family == "Debian"
-

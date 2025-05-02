@@ -6,69 +6,71 @@
   hosts: nodes  # 改為 all 以包含所有伺服器，也可以針對特定群組如 nodes
   become: false  # SSH key 複製通常不需要 sudo 權限
   gather_facts: false
-  
+
   vars:
-    ssh_key_file: "~/.ssh/id_rsa.pub"  # 本地 SSH 公鑰的位置，根據需要更改
+    ssh_key_file: ~/.ssh/id_rsa.pub  # 本地 SSH 公鑰的位置，根據需要更改
     # 注意: ansible_ssh_pass 和 ansible_become_pass 將通過命令行參數傳入
-  
+
   tasks:
     - name: Check if SSH key exists locally
-      local_action: stat path={{ ssh_key_file }}
+      delegate_to: localhost
+      ansible.builtin.stat:
+        path: "{{ ssh_key_file }}"
       register: ssh_key
-      
+
     - name: Fail if SSH key does not exist
-      fail:
-        msg: "SSH public key not found at {{ ssh_key_file }}. Please generate one with 'ssh-keygen'."
+      ansible.builtin.fail:
+        msg: SSH public key not found at {{ ssh_key_file }}. Please generate one with 'ssh-keygen'.
       when: not ssh_key.stat.exists
 
     - name: Get the content of the public key
-      local_action: shell cat {{ ssh_key_file }}
+      ansible.builtin.command: cat {{ ssh_key_file }}
       register: public_key_content
       changed_when: false
 
     - name: Create .ssh directory on remote servers if it doesn't exist
-      file:
+      ansible.builtin.file:
         path: ~/.ssh
         state: directory
         mode: '0700'
-      
+
     - name: Check if authorized_keys file exists
-      stat:
+      ansible.builtin.stat:
         path: ~/.ssh/authorized_keys
       register: authorized_keys_file
 
     - name: Create authorized_keys file if it doesn't exist
-      file:
+      ansible.builtin.file:
         path: ~/.ssh/authorized_keys
         state: touch
         mode: '0600'
       when: not authorized_keys_file.stat.exists
 
     - name: Check if the key is already present in authorized_keys
-      shell: grep -q "{{ public_key_content.stdout | regex_escape() }}" ~/.ssh/authorized_keys || echo "not_found"
+      ansible.builtin.shell: grep -q "{{ public_key_content.stdout | regex_escape() }}" ~/.ssh/authorized_keys || echo "not_found"
       register: key_exists
       changed_when: false
       failed_when: false
 
     - name: Append the SSH public key to authorized_keys if not already present
-      lineinfile:
+      ansible.builtin.lineinfile:
         path: ~/.ssh/authorized_keys
         line: "{{ public_key_content.stdout }}"
         state: present
       when: key_exists.stdout == "not_found"
-      
+
     - name: Ensure correct permissions on authorized_keys
-      file:
+      ansible.builtin.file:
         path: ~/.ssh/authorized_keys
         mode: '0600'
         state: file
 
     - name: Display successful connection message
-      debug:
-        msg: "Successfully connected to {{ inventory_hostname }} and copied SSH key"
+      ansible.builtin.debug:
+        msg: Successfully connected to {{ inventory_hostname }} and copied SSH key
       when: key_exists.stdout == "not_found"
-      
+
     - name: Display already exists message
-      debug:
-        msg: "SSH key already exists on {{ inventory_hostname }}"
+      ansible.builtin.debug:
+        msg: SSH key already exists on {{ inventory_hostname }}
       when: key_exists.stdout != "not_found"

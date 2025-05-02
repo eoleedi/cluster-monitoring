@@ -24,7 +24,7 @@ scrape_configs:
         regex: "([^:]+):.+"
         target_label: "instance"
         replacement: "$1"
-        
+
   - job_name: 'dcgm_exporter'
     static_configs:
       - targets:
@@ -43,7 +43,7 @@ scrape_configs:
         regex: "([^:]+):.+"
         target_label: "instance"
         replacement: "$1"
-        
+
 
 alerting:
   alertmanagers:
