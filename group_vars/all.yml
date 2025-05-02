@@ -31,7 +31,7 @@ prometheus_storage_path: /prometheus
 prometheus_port: 9090
 # 添加 Prometheus 身份驗證設定
 prometheus_basic_auth_enabled: true
-prometheus_basic_auth_username: smil
+prometheus_basic_auth_username: "{{ vault_prometheus_username }}"
 prometheus_basic_auth_password: "{{ vault_prometheus_password }}" # 使用 ansible-vault 加密的密碼
 
 grafana_version: 11.6.1
