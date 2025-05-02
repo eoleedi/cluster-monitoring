@@ -159,7 +159,7 @@
 
 - name: 顯示 Docker Compose 服務狀態
   debug:
-    var: output.services
+    var: output
 
 - name: 確保防火牆開放 Prometheus 和 Grafana 端口
   community.general.ufw:
