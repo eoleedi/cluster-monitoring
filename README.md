@@ -138,7 +138,7 @@ node3 ansible_host=<節點3 IP>
 
    Note: 這邊會要求輸入密碼，這個密碼會在執行 playbook 時使用。
 
-### 4. 執行部署
+### 5. 執行部署
 
 ```bash
 ansible-playbook site.yml --ask-become-pass -K --ask-vault-pass
