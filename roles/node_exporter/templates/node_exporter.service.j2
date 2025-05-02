@@ -1,0 +1,15 @@
+[Unit]
+Description=Node Exporter
+After=network-online.target
+
+[Service]
+User=node_exporter
+Group=node_exporter
+Type=simple
+EnvironmentFile=/etc/node_exporter/node_exporter.conf
+ExecStart=/usr/local/bin/node_exporter $ARGS
+Restart=on-failure
+RestartSec=5s
+
+[Install]
+WantedBy=multi-user.target

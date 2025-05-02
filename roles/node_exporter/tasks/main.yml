@@ -1,0 +1,132 @@
+---
+- name: 檢查 Node Exporter 是否已安裝
+  stat:
+    path: /usr/local/bin/node_exporter
+  register: node_exporter_installed
+
+- name: 創建 Node Exporter 系統使用者
+  user:
+    name: node_exporter
+    system: yes
+    shell: /bin/false
+    home: /var/lib/node_exporter
+    create_home: no
+    comment: "Node Exporter User"
+
+- name: 下載並安裝 Node Exporter
+  when: not node_exporter_installed.stat.exists
+  block:
+    - name: 下載 Node Exporter 二進制檔案
+      get_url:
+        url: https://github.com/prometheus/node_exporter/releases/download/v{{ node_exporter_version }}/node_exporter-{{ node_exporter_version }}.linux-amd64.tar.gz
+        dest: /tmp/node_exporter-{{ node_exporter_version }}.linux-amd64.tar.gz
+        mode: 0644
+
+    - name: 解壓 Node Exporter
+      unarchive:
+        src: /tmp/node_exporter-{{ node_exporter_version }}.linux-amd64.tar.gz
+        dest: /tmp
+        remote_src: yes
+
+    - name: 移動 Node Exporter 二進制檔案到適當的位置
+      copy:
+        src: /tmp/node_exporter-{{ node_exporter_version }}.linux-amd64/node_exporter
+        dest: /usr/local/bin/node_exporter
+        remote_src: yes
+        mode: 0755
+        owner: node_exporter
+        group: node_exporter
+
+    - name: 清理臨時檔案
+      file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - /tmp/node_exporter-{{ node_exporter_version }}.linux-amd64.tar.gz
+        - /tmp/node_exporter-{{ node_exporter_version }}.linux-amd64
+
+- name: 創建 Node Exporter Systemd 服務
+  template:
+    src: node_exporter.service.j2
+    dest: /etc/systemd/system/node_exporter.service
+    mode: 0644
+  register: node_exporter_service_file
+
+- name: 創建 Node Exporter 配置資料夾
+  file:
+    path: /etc/node_exporter
+    state: directory
+    mode: 0755
+    owner: node_exporter
+    group: node_exporter
+
+- name: 創建 Node Exporter 配置檔案
+  copy:
+    content: |
+      ARGS="--web.listen-address={{ node_exporter_web_listen_address }} \
+            {% for collector in node_exporter_enabled_collectors %}--collector.{{ collector }} {% endfor %}"
+    dest: /etc/node_exporter/node_exporter.conf
+    mode: 0644
+    owner: node_exporter
+    group: node_exporter
+  notify: restart node_exporter
+
+- name: 重新載入 Systemd 配置
+  when: node_exporter_service_file.changed
+  systemd:
+    daemon_reload: yes
+
+- name: 啟用並啟動 Node Exporter 服務
+  systemd:
+    name: node_exporter
+    enabled: yes
+    state: started
+
+- name: 確保防火牆僅允許監控伺服器訪問 Node Exporter (Debian/Ubuntu)
+  community.general.ufw:
+    rule: allow
+    port: "9100"
+    proto: tcp
+    from_ip: "{{ item }}"
+  loop: "{{ node_exporter_firewall_allow_from }}"
+  when: ansible_os_family == "Debian"
+  notify: reload ufw
+
+- name: 拒絕所有其他流量訪問 Node Exporter (Debian/Ubuntu)
+  community.general.ufw:
+    rule: deny
+    port: "9100"
+    proto: tcp
+  when: ansible_os_family == "Debian"
+  notify: reload ufw
+
+- name: 刪除過於寬鬆的 Node Exporter 防火牆規則 (Debian/Ubuntu)
+  community.general.ufw:
+    rule: allow
+    port: "9100"
+    proto: tcp
+    delete: yes
+  when: ansible_os_family == "Debian"
+
+- name: 允許所有其他入站連接
+  community.general.ufw:
+    rule: allow
+    direction: in
+  when: ansible_os_family == "Debian"
+
+- name: 啟用 UFW 防火牆 (如果未啟用)
+  community.general.ufw:
+    state: enabled
+  when: 
+    - ansible_os_family == "Debian"
+  notify: reload ufw
+
+- name: 監控 Node Exporter 服務狀態
+  service_facts:
+  register: service_state
+
+- name: 顯示 Node Exporter 服務狀態
+  debug:
+    msg: "Node Exporter 服務狀態: {{ service_state.ansible_facts.services['node_exporter.service'].state }}"
+  when: "'node_exporter.service' in service_state.ansible_facts.services"
+

@@ -1,0 +1,63 @@
+---
+services:
+  prometheus:
+    image: prom/prometheus:{{ prometheus_version }}
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./prometheus:/prometheus
+      # 添加 Prometheus 身份驗證設定文件
+      - ./prometheus/web.yml:/etc/prometheus/web.yml
+      # 掛載 TLS 證書
+      - ./prometheus/certs:/etc/prometheus/certs:ro
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--web.enable-lifecycle'
+      # 添加基本身份驗證配置
+      - '--web.config.file=/etc/prometheus/web.yml'
+    ports:
+      - "{{ prometheus_port }}:9090"
+    restart: unless-stopped
+    user: "65534:65534"  # nobody:nobody
+
+  grafana:
+    image: grafana/grafana:{{ grafana_version }}
+    volumes:
+      - ./grafana:/var/lib/grafana
+      - ./grafana/provisioning/:/etc/grafana/provisioning/
+      # 掛載 Grafana TLS 證書
+      - ./grafana/certs:/etc/grafana/certs:ro
+    environment:
+      - GF_SECURITY_ADMIN_USER={{ grafana_security_admin_user }}
+      - GF_SECURITY_ADMIN_PASSWORD={{ grafana_security_admin_password }}
+      - GF_USERS_ALLOW_SIGN_UP={{ grafana_users_allow_sign_up }}
+      # 添加更多 Grafana 安全設定
+      - GF_SECURITY_DISABLE_GRAVATAR={{ grafana_security_disable_gravatar }}
+      - GF_SECURITY_COOKIE_SECURE={{ grafana_security_cookie_secure }}
+      - GF_SECURITY_COOKIE_SAMESITE={{ grafana_security_cookie_samesite }}
+      # 添加白名單限制
+      - GF_AUTH_PROXY_WHITELIST=127.0.0.1
+      # 限制外部訪問
+      - GF_SERVER_DOMAIN={{ grafana_server_domain }}
+      - GF_SERVER_ROOT_URL={{ grafana_server_root_url }}
+      - GF_SERVER_SERVE_FROM_SUB_PATH=false
+      # HTTPS 配置
+      - GF_SERVER_PROTOCOL={{ grafana_protocol }}
+      - GF_SERVER_CERT_FILE={{ grafana_cert_path }}
+      - GF_SERVER_CERT_KEY={{ grafana_cert_key }}
+      - GF_SERVER_HTTP_PORT=3000
+      # 添加 Grafana 身份驗證設定 for external access
+      - GF_AUTH_ANONYMOUS_ENABLED={{ grafana_auth_anonymous_enabled }}
+      - GF_AUTH_ANONYMOUS_ORG_NAME={{ grafana_auth_anonymous_org_name }}
+      - GF_AUTH_ANONYMOUS_ORG_ROLE={{ grafana_auth_anonymous_org_role }}
+      - GF_AUTH_ANONYMOUS_HIDE_VERSION={{ grafana_auth_anonymous_hide_version }}
+      # 添加 Grafana OIDC 設定
+      - GF_AUTH_GENERIC_OAUTH_TLS_SKIP_VERIFY_INSECURE={{ grafana_auth_generic_oauth_tls_skip_verify_insecure }}
+    ports:
+      - "{{ grafana_port }}:3000"
+    restart: unless-stopped
+    user: "472:472"  # grafana:grafana
+    depends_on:
+      - prometheus

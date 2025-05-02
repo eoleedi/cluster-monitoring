@@ -1,0 +1,173 @@
+---
+- name: 安裝基本必備工具
+  package:
+    name:
+      - python3-pip
+      - docker
+      - docker-compose
+    state: present
+  when: ansible_os_family == "Debian"
+
+- name: 確保 Docker 服務已啟動並啟用
+  systemd:
+    name: docker
+    state: started
+    enabled: yes
+
+- name: 安裝 Docker Python 模組
+  pip:
+    name: docker
+    state: present
+
+- name: 創建監控服務目錄
+  file:
+    path: "{{ monitoring_data_dir }}"
+    state: directory
+    mode: 0755
+
+- name: 創建 Prometheus 數據目錄
+  file:
+    path: "{{ monitoring_data_dir }}/prometheus"
+    state: directory
+    mode: 0755
+    owner: 65534  # nobody user
+    group: 65534  # nobody group
+
+# 為 Prometheus 創建 TLS 證書目錄
+- name: 創建 Prometheus 證書目錄
+  file:
+    path: "{{ monitoring_data_dir }}/prometheus/certs"
+    state: directory
+    mode: 0750
+    owner: 65534  # nobody user
+    group: 65534  # nobody group
+
+# 創建 Prometheus TLS 證書 (自簽證書僅用於測試)
+- name: 生成自簽 TLS 證書
+  command: >
+    openssl req -x509 -newkey rsa:4096 -nodes
+    -keyout {{ monitoring_data_dir }}/prometheus/certs/server.key
+    -out {{ monitoring_data_dir }}/prometheus/certs/server.crt
+    -days 365
+    -subj "/CN=prometheus.local/O=Monitoring/C=TW"
+  args:
+    creates: "{{ monitoring_data_dir }}/prometheus/certs/server.crt"
+  notify: restart monitoring stack
+
+# 設定證書權限
+- name: 設定 TLS 證書權限
+  file:
+    path: "{{ item }}"
+    mode: 0640
+    owner: 65534  # nobody user
+    group: 65534  # nobody group
+  loop:
+    - "{{ monitoring_data_dir }}/prometheus/certs/server.key"
+    - "{{ monitoring_data_dir }}/prometheus/certs/server.crt"
+  when: ansible_os_family == "Debian" or ansible_os_family == "RedHat"
+
+# 為 Grafana 創建 TLS 證書目錄
+- name: 創建 Grafana 證書目錄
+  file:
+    path: "{{ monitoring_data_dir }}/grafana/certs"
+    state: directory
+    mode: 0750
+    owner: 472  # grafana user
+    group: 472  # grafana group
+
+# 創建 Grafana TLS 證書 (自簽證書僅用於測試)
+- name: 生成 Grafana 自簽 TLS 證書
+  command: >
+    openssl req -x509 -newkey rsa:4096 -nodes
+    -keyout {{ monitoring_data_dir }}/grafana/certs/grafana.key
+    -out {{ monitoring_data_dir }}/grafana/certs/grafana.crt
+    -days 365
+    -subj "/CN=grafana.local/O=Monitoring/C=TW"
+  args:
+    creates: "{{ monitoring_data_dir }}/grafana/certs/grafana.crt"
+  notify: restart monitoring stack
+
+# 設定 Grafana 證書權限
+- name: 設定 Grafana TLS 證書權限
+  file:
+    path: "{{ item }}"
+    mode: 0640
+    owner: 472  # grafana user
+    group: 472  # grafana group
+  loop:
+    - "{{ monitoring_data_dir }}/grafana/certs/grafana.key"
+    - "{{ monitoring_data_dir }}/grafana/certs/grafana.crt"
+  when: ansible_os_family == "Debian" or ansible_os_family == "RedHat"
+
+# 複製 Prometheus 身份驗證配置
+- name: 複製 Prometheus 身份驗證配置
+  template:
+    src: web.yml.j2
+    dest: "{{ monitoring_data_dir }}/prometheus/web.yml"
+    mode: 0640
+    owner: 65534  # nobody user
+    group: 65534  # nobody group
+  notify: restart monitoring stack
+
+# 複製 Prometheus 主配置文件
+- name: 複製 Prometheus 配置文件
+  template:
+    src: prometheus.yml.j2
+    dest: "{{ monitoring_data_dir }}/prometheus/prometheus.yml"
+    mode: 0644
+    owner: 65534  # nobody user
+    group: 65534  # nobody group
+  notify: restart monitoring stack
+
+- name: 創建 Grafana 數據目錄
+  file:
+    path: "{{ monitoring_data_dir }}/grafana"
+    state: directory
+    mode: 0755
+    owner: 472  # grafana user
+    group: 472  # grafana group
+
+# 更新 Grafana 資料源配置，新增身份驗證資訊
+- name: 確保 Grafana 佈建目錄存在
+  file:
+    path: "{{ monitoring_data_dir }}/grafana/provisioning/datasources"
+    state: directory
+    mode: 0755
+    owner: 472
+    group: 472
+
+- name: 複製 Grafana 資料源配置
+  template:
+    src: datasource.yml.j2
+    dest: "{{ monitoring_data_dir }}/grafana/provisioning/datasources/datasource.yml"
+    mode: 0644
+  register: grafana_datasource
+
+
+- name: 複製 Docker Compose 配置
+  template:
+    src: docker-compose.yml.j2
+    dest: "{{ monitoring_data_dir }}/docker-compose.yml"
+    mode: 0644
+  register: docker_compose_file
+
+- name: 啟動監控服務
+  community.docker.docker_compose_v2:
+    project_src: "{{ monitoring_data_dir }}"
+    state: present
+  register: output
+
+- name: 顯示 Docker Compose 服務狀態
+  debug:
+    var: output.services
+
+- name: 確保防火牆開放 Prometheus 和 Grafana 端口
+  community.general.ufw:
+    rule: allow
+    port: "{{ item }}"
+    proto: tcp
+  loop:
+    - "{{ prometheus_port }}"
+    - "{{ grafana_port }}"
+  when: ansible_os_family == "Debian"
+

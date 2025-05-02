@@ -1,0 +1,15 @@
+---
+- name: restart monitoring stack
+  community.docker.docker_compose_v2:
+    project_src: "{{ monitoring_data_dir }}"
+    files:
+      - docker-compose.yml        # or list multiple .yml files if you use overrides
+    state: present               # spin up the stack if missing
+    recreate: always               # re-create containers when the compose definition changes
+    pull: missing                   # pull newer images if available
+    build: never                 # build local images if you have a build: section
+    remove_orphans: true         # clean up any stray containers
+
+- name: reload ufw
+  shell: ufw reload
+  when: ansible_os_family == "Debian"

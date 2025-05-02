@@ -1,0 +1,9 @@
+---
+- name: restart node_exporter
+  systemd:
+    name: node_exporter
+    state: restarted
+  
+- name: reload ufw
+  shell: ufw reload
+  when: ansible_os_family == "Debian"

@@ -1,0 +1,19 @@
+---
+- name: 安裝 Node Exporter 到所有節點
+  hosts: nodes
+  tags: node_exporter
+  roles:
+    - node_exporter
+
+- name: 安裝 DCGM-Exporter 到所有節點
+  hosts: nodes
+  tags: dcgm_exporter
+  roles:
+    - dcgm_exporter
+
+- name: 安裝 Prometheus 和 Grafana 到監控伺服器
+  hosts: monitoring
+  connection: local
+  tags: monitoring
+  roles:
+    - monitoring

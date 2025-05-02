@@ -1,0 +1,56 @@
+global:
+  scrape_interval: {{ prometheus_scrape_interval }}
+  evaluation_interval: {{ prometheus_evaluation_interval }}
+
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+
+  - job_name: 'node_exporter'
+    static_configs:
+      - targets:
+{% for host in groups['nodes'] %}
+        - '{{ hostvars[host].ansible_host }}:{% if hostvars[host].node_exporter_port is defined %}{{ hostvars[host].node_exporter_port }}{% else %}9100{% endif %}'
+{% endfor %}
+    relabel_configs:
+      - source_labels: [instance]
+        regex: "([^:]+):.+"
+        target_label: "instance"
+        replacement: "$1"
+    metric_relabel_configs:
+      - source_labels: [instance]
+        regex: "([^:]+):.+"
+        target_label: "instance"
+        replacement: "$1"
+        
+  - job_name: 'dcgm_exporter'
+    static_configs:
+      - targets:
+{% for host in groups['nodes'] %}
+        - '{{ hostvars[host].ansible_host }}:{% if hostvars[host].dcgm_exporter_port is defined %}{{ hostvars[host].dcgm_exporter_port }}{% else %}9400{% endif %}'
+{% endfor %}
+    relabel_configs:
+      - source_labels: [instance]
+        regex: "([^:]+):.+"
+        target_label: "instance"
+        replacement: "$1"
+    metric_relabel_configs:
+      - action: labeldrop
+        regex: Hostname
+      - source_labels: [instance]
+        regex: "([^:]+):.+"
+        target_label: "instance"
+        replacement: "$1"
+        
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          # - alertmanager:9093
+
+rule_files:
+  # - "first_rules.yml"
+  # - "second_rules.yml"
