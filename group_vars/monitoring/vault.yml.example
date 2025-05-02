@@ -7,6 +7,3 @@ vault_grafana_password: "password"
 
 vault_grafana_server_domain: "monitoring.example.com"
 vault_grafana_server_root_url: "https://0.0.0.0:3000"
-
-# Firewall 設定
-vault_monitoring_public_ip: ""

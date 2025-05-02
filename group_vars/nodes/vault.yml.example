@@ -1,0 +1,3 @@
+---
+# Firewall 設定
+vault_monitoring_public_ip: ""

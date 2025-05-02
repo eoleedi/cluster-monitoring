@@ -145,12 +145,16 @@ node3 ansible_host=<節點3 IP>
    # group_vars/monitoring/vault.yml
    vault_prometheus_password: PASSWORD
    vault_grafana_password: PASSWORD
+
+   # group_vars/nodes/vault.yml
+   vault_monitoring_public_ip: ""
    ```
 
 2. 加密 vault.yml：
 
    ```bash
    ansible-vault encrypt group_vars/monitoring/vault.yml
+   ansible-vault encrypt group_vars/nodes/vault.yml
    ```
 
    Note: 這邊會要求輸入密碼，這個密碼會在執行 playbook 時使用。
