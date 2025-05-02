@@ -52,7 +52,7 @@
     dest: /etc/systemd/system/node_exporter.service
     mode: 0644
   register: node_exporter_service_file
-  notify: reload systemd
+  notify: Reload systemd
 
 - name: 創建 Node Exporter 配置資料夾
   file:
@@ -71,7 +71,7 @@
     mode: 0644
     owner: node_exporter
     group: node_exporter
-  notify: restart node_exporter
+  notify: Restart node_exporter
 
 - name: 啟用並啟動 Node Exporter 服務
   systemd:
@@ -87,7 +87,7 @@
     from_ip: "{{ item }}"
   loop: "{{ node_exporter_firewall_allow_from }}"
   when: ansible_os_family == "Debian"
-  notify: reload ufw
+  notify: Reload ufw
 
 - name: 拒絕所有其他流量訪問 Node Exporter (Debian/Ubuntu)
   community.general.ufw:
@@ -95,7 +95,7 @@
     port: "9100"
     proto: tcp
   when: ansible_os_family == "Debian"
-  notify: reload ufw
+  notify: Reload ufw
 
 - name: 刪除過於寬鬆的 Node Exporter 防火牆規則 (Debian/Ubuntu)
   community.general.ufw:
@@ -116,7 +116,7 @@
     state: enabled
   when:
     - ansible_os_family == "Debian"
-  notify: reload ufw
+  notify: Reload ufw
 
 - name: 監控 Node Exporter 服務狀態
   service_facts:

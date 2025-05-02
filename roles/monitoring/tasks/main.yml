@@ -52,7 +52,7 @@
     -subj "/CN=prometheus.local/O=Monitoring/C=TW"
   args:
     creates: "{{ monitoring_data_dir }}/prometheus/certs/server.crt"
-  notify: restart monitoring stack
+  notify: Restart monitoring stack
 
 # 設定證書權限
 - name: 設定 TLS 證書權限
@@ -85,7 +85,7 @@
     -subj "/CN=grafana.local/O=Monitoring/C=TW"
   args:
     creates: "{{ monitoring_data_dir }}/grafana/certs/grafana.crt"
-  notify: restart monitoring stack
+  notify: Restart monitoring stack
 
 # 設定 Grafana 證書權限
 - name: 設定 Grafana TLS 證書權限
@@ -107,7 +107,7 @@
     mode: 0640
     owner: 65534  # nobody user
     group: 65534  # nobody group
-  notify: restart monitoring stack
+  notify: Restart monitoring stack
 
 # 複製 Prometheus 主配置文件
 - name: 複製 Prometheus 配置文件
@@ -117,7 +117,7 @@
     mode: 0644
     owner: 65534  # nobody user
     group: 65534  # nobody group
-  notify: restart monitoring stack
+  notify: Restart monitoring stack
 
 - name: 創建 Grafana 數據目錄
   file:
