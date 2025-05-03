@@ -60,35 +60,46 @@
         name: docker
         executable: pip3
 
+- name: Check if nvidia-ctk binary exists
+  ansible.builtin.stat:
+    path: /usr/bin/nvidia-ctk
+  register: ctk_stat
 
 - name: 安裝 NVIDIA Container Toolkit (Debian/Ubuntu)
+  when:
+    - ansible_os_family == "Debian"
+    - not ctk_stat.stat.exists
   block:
     - name: 添加 NVIDIA GPU 儲存庫公鑰
       apt_key:
         url: https://nvidia.github.io/libnvidia-container/gpgkey
         state: present
-      when: ansible_os_family == "Debian"
 
     - name: 添加 NVIDIA Container Toolkit 儲存庫
       get_url:
         url: https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list
         dest: /etc/apt/sources.list.d/nvidia-container-toolkit.list
         mode: '0644'
-      when: ansible_os_family == "Debian"
 
     - name: 更新 apt 套件索引
       apt:
         update_cache: yes
-      when: ansible_os_family == "Debian"
 
     - name: 安裝 NVIDIA Container Toolkit
       apt:
         name:
           - nvidia-container-toolkit
         state: present
-      when: ansible_os_family == "Debian"
 
-    - name: 重新配置 Docker 以支援 NVIDIA Container Runtime
+- name: 檢查 Docker 是否已配置 NVIDIA Container Runtime
+  command: docker info | grep -i runtimes
+  register: docker_runtimes_check
+
+- name: 重新配置 Docker 以支援 NVIDIA Container Runtime
+  when:
+    - "'nvidia' not in docker_runtimes_check.stdout"
+  block:
+    - name: 配置 Docker
       command: nvidia-ctk runtime configure --runtime=docker
 
     - name: 重新啟動 Docker 服務以套用 NVIDIA Container Runtime 配置
