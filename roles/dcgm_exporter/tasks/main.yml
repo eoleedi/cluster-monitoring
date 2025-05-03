@@ -92,7 +92,7 @@
         state: present
 
 - name: 檢查 Docker 是否已配置 NVIDIA Container Runtime
-  command: docker info | grep -i runtimes
+  command: docker info
   register: docker_runtimes_check
 
 - name: 重新配置 Docker 以支援 NVIDIA Container Runtime
