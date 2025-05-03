@@ -4,9 +4,14 @@ global:
 
 scrape_configs:
   - job_name: 'prometheus'
+    scheme: https
+    tls_config:
+      insecure_skip_verify: true
+    basic_auth:
+      username: "{{ prometheus_basic_auth_username }}"
+      password: "{{ prometheus_basic_auth_password }}"
     static_configs:
-      - targets: ['localhost:9090']
-
+      - targets: ['localhost:{{ prometheus_port }}']
 
   - job_name: 'node_exporter'
     static_configs:
