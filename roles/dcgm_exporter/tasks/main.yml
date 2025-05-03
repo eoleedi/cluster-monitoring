@@ -108,6 +108,12 @@
     state: directory
     mode: 0755
 
+- name: 拷貝自定義 collectors 配置文件
+  copy:
+    src: custom-collectors.csv
+    dest: "{{ dcgm_exporter_dir }}/custom-collectors.csv"
+    mode: 0644
+
 - name: 拉取 DCGM-Exporter Docker 映像
   community.general.docker_image:
     name: "{{ dcgm_exporter_image }}"
@@ -135,6 +141,9 @@
       - SYS_ADMIN
     published_ports:
       - 9400:9400
+    volumes:
+      - "{{ dcgm_exporter_dir }}/custom-collectors.csv:/etc/dcgm-exporter/custom-collectors.csv:ro"
+    command: -f /etc/dcgm-exporter/custom-collectors.csv
 
 - name: Drop other traffic
   ansible.builtin.iptables:
