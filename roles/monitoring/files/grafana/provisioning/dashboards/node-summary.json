@@ -480,7 +480,18 @@
       "monitoring"
     ],
     "templating": {
-      "list": []
+      "list": [
+        {
+          "current": {},
+          "label": "Prometheus",
+          "name": "DS_PROMETHEUS",
+          "options": [],
+          "query": "prometheus",
+          "refresh": 1,
+          "regex": "",
+          "type": "datasource"
+        }
+      ]
     },
     "time": {
       "from": "now-1h",
@@ -490,6 +501,6 @@
     "timezone": "",
     "title": "Node Summary",
     "uid": "node-summary",
-    "version": 1,
+    "version": 3,
     "weekStart": ""
   }

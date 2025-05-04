@@ -17215,10 +17215,9 @@
       "list": [
         {
           "current": {},
-          "hide": 2,
           "includeAll": false,
-          "label": "Datasource",
-          "name": "datasource",
+          "label": "Prometheus",
+          "name": "DS_PROMETHEUS",
           "options": [],
           "query": "prometheus",
           "refresh": 1,
@@ -17315,6 +17314,6 @@
     "timezone": "browser",
     "title": "Node Single Host",
     "uid": "node-single-host",
-    "version": 1,
+    "version": 3,
     "weekStart": ""
   }
