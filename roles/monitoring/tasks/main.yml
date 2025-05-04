@@ -143,6 +143,22 @@
     mode: 0644
   register: grafana_datasource
 
+- name: 確保 Grafana Dashboard 佈建目錄存在
+  file:
+    path: "{{ monitoring_data_dir }}/grafana/provisioning/dashboards"
+    state: directory
+    mode: 0755
+    owner: 472
+    group: 472
+
+- name: 複製 Grafana Dashboard 配置
+  copy:
+    src: grafana/provisioning/dashboards/
+    dest: "{{ monitoring_data_dir }}/grafana/provisioning/dashboards"
+    mode: 0644
+    owner: 472
+    group: 472
+  register: grafana_dashboard
 
 - name: 複製 Docker Compose 配置
   template:
