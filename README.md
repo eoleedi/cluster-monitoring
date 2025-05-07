@@ -67,8 +67,7 @@ cluster-monitoring/
     2. 安裝 Ansible 的插件:
 
         ```bash
-            ansible-galaxy collection install community.docker
-            ansible-galaxy collection install community.general
+            ansible-galaxy install -r requirements.yml
         ```
 
 - 安裝passlib:
