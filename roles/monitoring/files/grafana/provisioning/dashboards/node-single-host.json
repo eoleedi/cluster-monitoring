@@ -17205,7 +17205,7 @@
         "type": "row"
       }
     ],
-    "refresh": "1m",
+    "refresh": "auto",
     "schemaVersion": 41,
     "tags": [
       "linux",
@@ -17314,6 +17314,6 @@
     "timezone": "browser",
     "title": "Node Single Host",
     "uid": "node-single-host",
-    "version": 3,
+    "version": 4,
     "weekStart": ""
   }

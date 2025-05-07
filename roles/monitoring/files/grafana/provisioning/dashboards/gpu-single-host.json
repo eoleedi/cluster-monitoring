@@ -138,9 +138,11 @@
               "uid": "${DS_PROMETHEUS}"
             },
             "editorMode": "code",
-            "expr": "label_replace(DCGM_FI_DEV_GPU_UTIL{instance=\"$instance\", gpu=\"$gpu\"}, \"instance\", \"$1\", \"instance\", \"(.*):.*\")",
+            "exemplar": false,
+            "expr": "DCGM_FI_DEV_GPU_UTIL{instance=\"$instance\", gpu=\"$gpu\"}",
+            "instant": true,
             "legendFormat": "{{instance}} GPU {{gpu}}",
-            "range": true,
+            "range": false,
             "refId": "A"
           }
         ],
@@ -201,10 +203,12 @@
               "uid": "${DS_PROMETHEUS}"
             },
             "editorMode": "code",
+            "exemplar": false,
             "expr": "DCGM_FI_DEV_GPU_TEMP{instance=\"$instance\", gpu=\"$gpu\"}",
             "hide": false,
+            "instant": true,
             "legendFormat": "GPU {{gpu}}",
-            "range": true,
+            "range": false,
             "refId": "A"
           }
         ],
@@ -267,10 +271,12 @@
               "uid": "${DS_PROMETHEUS}"
             },
             "editorMode": "code",
+            "exemplar": false,
             "expr": "DCGM_FI_DEV_GPU_TEMP{instance=\"$instance\", gpu=\"$gpu\"}",
             "hide": false,
+            "instant": true,
             "legendFormat": "GPU {{gpu}}",
-            "range": true,
+            "range": false,
             "refId": "A"
           }
         ],
@@ -352,11 +358,12 @@
               "uid": "${DS_PROMETHEUS}"
             },
             "editorMode": "code",
-            "exemplar": true,
+            "exemplar": false,
             "expr": "DCGM_FI_DEV_GPU_TEMP{instance=\"$instance\", gpu=\"$gpu\"}",
+            "instant": true,
             "interval": "",
             "legendFormat": "GPU {{gpu}}",
-            "range": true,
+            "range": false,
             "refId": "A"
           }
         ],
@@ -418,9 +425,11 @@
               "uid": "${DS_PROMETHEUS}"
             },
             "editorMode": "code",
+            "exemplar": false,
             "expr": "DCGM_FI_DEV_FB_FREE{instance=\"$instance\", gpu=\"$gpu\"} + DCGM_FI_DEV_FB_USED{instance=\"$instance\", gpu=\"$gpu\"}",
+            "instant": true,
             "legendFormat": "__auto",
-            "range": true,
+            "range": false,
             "refId": "A"
           }
         ],
@@ -500,12 +509,13 @@
               "uid": "${DS_PROMETHEUS}"
             },
             "editorMode": "code",
-            "exemplar": true,
-            "expr": "label_replace(DCGM_FI_DEV_FB_USED{instance=\"$instance\", gpu=\"$gpu\"},\"instance\", \"$1\", \"instance\", \"(.*):.*\")",
+            "exemplar": false,
+            "expr": "DCGM_FI_DEV_FB_USED{instance=\"$instance\", gpu=\"$gpu\"}",
             "hide": false,
+            "instant": true,
             "interval": "",
             "legendFormat": "{{instance}} GPU {{gpu}}",
-            "range": true,
+            "range": false,
             "refId": "A"
           },
           {
@@ -517,9 +527,9 @@
             "exemplar": false,
             "expr": "DCGM_FI_DEV_FB_FREE{instance=\"$instance\", gpu=\"$gpu\"} + DCGM_FI_DEV_FB_USED{instance=\"$instance\"}",
             "hide": false,
-            "instant": false,
+            "instant": true,
             "legendFormat": "Total",
-            "range": true,
+            "range": false,
             "refId": "B"
           }
         ],
@@ -641,6 +651,6 @@
     "timezone": "",
     "title": "GPU Single Host",
     "uid": "gpu-single-host",
-    "version": 3,
+    "version": 5,
     "weekStart": ""
   }
