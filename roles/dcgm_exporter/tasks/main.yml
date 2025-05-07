@@ -139,7 +139,7 @@
   community.docker.docker_container:
     name: dcgm-exporter
     image: "{{ dcgm_exporter_image }}"
-    restart_policy: unless-stopped
+    restart_policy: always
     state: started
     runtime: nvidia
     capabilities:
