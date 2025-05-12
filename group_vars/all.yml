@@ -16,9 +16,9 @@ node_exporter_enabled_collectors:
 # DCGM Exporter 設定
 dcgm_exporter_version: 4.2.0-4.1.0-ubuntu22.04
 dcgm_exporter_port: 9400
-dcgm_exporter_firewall_allow_from:
-  - "{{ hostvars[groups['monitoring'][0]].ansible_host }}" # 允許監控伺服器的私有 IP 訪問
-  - "{{vault_monitoring_public_ip}}" # 添加監控伺服器的公共 IP 地址
+
+# DCGM Exporter 防火牆設定 - 從 hosts.ini 的分組中確定使用哪個 IP
+dcgm_exporter_firewall_allow_from: "{{ monitoring_ips | default([]) }}"
 dcgm_exporter_image: nvcr.io/nvidia/k8s/dcgm-exporter:{{ dcgm_exporter_version }}
 dcgm_exporter_dir: /opt/dcgm-exporter
 
@@ -60,7 +60,5 @@ grafana_server_root_url: "{{vault_grafana_server_root_url}}"
 # Monitoring 伺服器設定
 monitoring_data_dir: /opt/monitoring
 
-# Node Exporter 防火牆設定
-node_exporter_firewall_allow_from:
-  - "{{ hostvars[groups['monitoring'][0]].ansible_host }}" # 允許監控伺服器的私有 IP 訪問
-  - "{{vault_monitoring_public_ip}}" # 添加監控伺服器的公共 IP 地址
+# Node Exporter 防火牆設定 - 從 hosts.ini 的分組中確定使用哪個 IP
+node_exporter_firewall_allow_from: "{{ monitoring_ips | default([]) }}"
