@@ -24,6 +24,7 @@
       when: not ssh_key.stat.exists
 
     - name: Get the content of the public key
+      delegate_to: localhost
       ansible.builtin.command: cat {{ ssh_key_file }}
       register: public_key_content
       changed_when: false
