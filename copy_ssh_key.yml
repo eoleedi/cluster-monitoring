@@ -3,13 +3,13 @@
 # 建立於 April 30, 2025
 
 - name: Copy SSH public key to servers using password authentication
-  hosts: nodes  # 改為 all 以包含所有伺服器，也可以針對特定群組如 nodes
+  hosts: nodes
   become: false  # SSH key 複製通常不需要 sudo 權限
   gather_facts: false
 
   vars:
     ssh_key_file: ~/.ssh/id_rsa.pub  # 本地 SSH 公鑰的位置，根據需要更改
-    # 注意: ansible_ssh_pass 和 ansible_become_pass 將通過命令行參數傳入
+    # 注意: ansible_ssh_pass 將通過命令行參數傳入
 
   tasks:
     - name: Check if SSH key exists locally
