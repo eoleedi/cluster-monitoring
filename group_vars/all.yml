@@ -71,4 +71,4 @@ nut_exporter_port: 9199
 nut_exporter_user: "{{ vault_nut_exporter_user }}"
 nut_exporter_password: "{{ vault_nut_exporter_password }}"
 nut_exporter_variables: \
-  battery.charge,battery.runtime,battery.voltage,battery.voltage.nominal,input.voltage,input.voltage.nominal,output.voltage,ups.load,ups.status
+  battery.charge,battery.runtime,battery.voltage,battery.voltage.nominal,input.voltage,input.voltage.nominal,output.voltage,ups.load,ups.status,ups.realpower.nominal
