@@ -51,9 +51,10 @@ scrape_configs:
 
   - job_name: 'nut_exporter'
     static_configs:
-      - targets:
 {% for host in groups['ups'] %}
-        - '{{ hostvars[host].ansible_host }}:{{ nut_exporter_port }}'
+      - targets: ['{{ hostvars[host].ansible_host }}']
+        labels:
+          ups: '{{ hostvars[host].inventory_hostname }}'
 {% endfor %}
     metrics_path: /ups_metrics
     relabel_configs:
@@ -61,6 +62,8 @@ scrape_configs:
         target_label: __param_server
       - source_labels: [__param_server]
         target_label: instance
+      - target_label: __address__
+        replacement: nut-exporter:9199
 
 
 alerting:
