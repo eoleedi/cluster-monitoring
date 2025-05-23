@@ -37,6 +37,7 @@ services:
       - GF_SECURITY_DISABLE_GRAVATAR={{ grafana_security_disable_gravatar }}
       - GF_SECURITY_COOKIE_SECURE={{ grafana_security_cookie_secure }}
       - GF_SECURITY_COOKIE_SAMESITE={{ grafana_security_cookie_samesite }}
+      - GF_STRICT_TRANSPORT_SECURITY={{ grafana_strict_transport_security }}
       # 添加白名單限制
       - GF_AUTH_PROXY_WHITELIST=127.0.0.1
       # 限制外部訪問

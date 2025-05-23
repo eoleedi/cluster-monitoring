@@ -82,7 +82,7 @@
     -keyout {{ monitoring_data_dir }}/grafana/certs/grafana.key
     -out {{ monitoring_data_dir }}/grafana/certs/grafana.crt
     -days 365
-    -subj "/CN=grafana.local/O=Monitoring/C=TW"
+    -subj "/CN={{ grafana_server_domain }}/O=Monitoring/C=TW"
   args:
     creates: "{{ monitoring_data_dir }}/grafana/certs/grafana.crt"
   notify: Restart monitoring stack
