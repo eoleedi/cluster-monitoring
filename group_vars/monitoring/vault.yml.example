@@ -7,3 +7,8 @@ vault_grafana_password: "password"
 
 vault_grafana_server_domain: "monitoring.example.com"
 vault_grafana_server_root_url: "https://0.0.0.0:3000"
+
+# Nut exporter
+nut_exporter_server: "192.168.1.1"
+nut_exporter_user: "username"
+nut_exporter_password: "password"

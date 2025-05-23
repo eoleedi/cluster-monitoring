@@ -62,3 +62,13 @@ services:
     user: "472:472"  # grafana:grafana
     depends_on:
       - prometheus
+  nut-exporter:
+    image: ghcr.io/druggeri/nut_exporter: {{ nut_exporter_version }}
+    restart: always
+    ports:
+      - "{{ nut_exporter_port }}:9199"
+    environment:
+      - NUT_EXPORTER_SERVER={{ nut_exporter_server}}
+      - NUT_EXPORTER_USERNAME={{ nut_exporter_user }}
+      - NUT_EXPORTER_PASSWORD={{ nut_exporter_password }}
+      - NUT_EXPORTER_VARIABLES=battery.charge,battery.runtime,battery.voltage,battery.voltage.nominal,input.voltage,input.voltage.nominal,output.voltage,ups.load,ups.status

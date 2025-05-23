@@ -65,3 +65,6 @@ monitoring_data_dir: /opt/monitoring
 node_exporter_firewall_allow_from:
   - "{{ hostvars[groups['monitoring'][0]].ansible_host }}" # 允許監控伺服器的私有 IP 訪問
   - "{{vault_monitoring_public_ip}}" # 添加監控伺服器的公共 IP 地址
+# Nut Exporter 設定
+nut_exporter_version: 3.2.0
+nut_exporter_port: 9199
