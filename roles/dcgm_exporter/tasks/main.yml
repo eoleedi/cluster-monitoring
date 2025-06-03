@@ -38,6 +38,18 @@
     - ansible_os_family == "Debian"
     - docker_check.rc != 0
   block:
+    - name: 創建 keyrings 目錄
+      file:
+        path: /etc/apt/keyrings
+        state: directory
+        mode: '0755'
+
+    - name: 下載並添加 Docker GPG 金鑰
+      get_url:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        dest: /etc/apt/keyrings/docker.asc
+        mode: '0644'
+
     - name: 添加 Docker 儲存庫
       deb822_repository:
         name: docker
@@ -46,8 +58,12 @@
         suites: ["{{ ansible_distribution_release }}"]
         components: [stable]
         architectures: [amd64]
-        signed_by: https://download.docker.com/linux/ubuntu/gpg
+        signed_by: /etc/apt/keyrings/docker.asc
         state: present
+
+    - name: 更新 apt 快取
+      apt:
+        update_cache: yes
 
     - name: 安裝 Docker 套件
       apt:
@@ -95,14 +111,24 @@
     - ansible_os_family == "Debian"
     - not ctk_stat.stat.exists
   block:
+    - name: 下載並添加 NVIDIA Container Toolkit GPG 金鑰
+      get_url:
+        url: https://nvidia.github.io/libnvidia-container/gpgkey
+        dest: /etc/apt/keyrings/nvidia-container-toolkit.asc
+        mode: '0644'
+
     - name: 添加 NVIDIA Container Toolkit 儲存庫
       deb822_repository:
         name: nvidia-container-toolkit
         types: [deb]
         uris: https://nvidia.github.io/libnvidia-container/stable/deb
         suites: [/]
-        signed_by: https://nvidia.github.io/libnvidia-container/gpgkey
+        signed_by: /etc/apt/keyrings/nvidia-container-toolkit.asc
         state: present
+
+    - name: 更新 apt 快取
+      apt:
+        update_cache: yes
 
     - name: 安裝 NVIDIA Container Toolkit
       apt:
