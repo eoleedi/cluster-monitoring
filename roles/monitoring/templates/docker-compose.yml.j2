@@ -62,6 +62,7 @@ services:
     user: "472:472"  # grafana:grafana
     depends_on:
       - prometheus
+{% if nut_exporter_enabled %}
   nut-exporter:
     image: ghcr.io/druggeri/nut_exporter:{{ nut_exporter_version }}
     restart: always
@@ -71,3 +72,4 @@ services:
       - NUT_EXPORTER_USERNAME={{ nut_exporter_user }}
       - NUT_EXPORTER_PASSWORD={{ nut_exporter_password }}
       - NUT_EXPORTER_VARIABLES={{ nut_exporter_variables }}
+{% endif %}
