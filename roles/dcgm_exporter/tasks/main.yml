@@ -27,12 +27,6 @@
     state: present
   when: pip_check.rc != 0
 
-# - name: 檢查 Docker 是否已安裝
-#   command: docker --version
-#   register: docker_check
-#   failed_when: false
-#   changed_when: false
-
 - name: 清理舊的 APT 配置 (Debian/Ubuntu)
   when: ansible_os_family == "Debian"
   block:
@@ -57,19 +51,9 @@
         - /etc/apt/sources.list.d/docker.list
       failed_when: false
 
-    - name: 移除可能衝突的 Docker 儲存庫檔案
-      file:
-        path: "{{ item }}"
-        state: absent
-      loop:
-        - /etc/apt/sources.list.d/docker.sources
-        - /etc/apt/sources.list.d/nvidia-container-toolkit.sources
-      failed_when: false
-
 - name: 安裝 Docker (Debian/Ubuntu)
   when:
     - ansible_os_family == "Debian"
-    # - docker_check.rc != 0
   block:
     - name: 添加 Docker 儲存庫
       deb822_repository:
@@ -80,7 +64,6 @@
         components: stable
         architectures: amd64
         signed_by: https://download.docker.com/linux/ubuntu/gpg
-        state: present
 
     - name: 更新 apt 快取
       apt:
@@ -98,24 +81,20 @@
         name: docker
         executable: pip3
 
-# - name: Check if nvidia-ctk binary exists
-#   ansible.builtin.stat:
-#     path: /usr/bin/nvidia-ctk
-#   register: ctk_stat
 
 - name: 安裝 NVIDIA Container Toolkit (Debian/Ubuntu)
   when:
     - ansible_os_family == "Debian"
-    # - not ctk_stat.stat.exists
   block:
     - name: 添加 NVIDIA Container Toolkit 儲存庫
       deb822_repository:
         name: nvidia-container-toolkit
         types: deb
-        uris: https://nvidia.github.io/libnvidia-container/stable/deb
-        suites: '{{ ansible_distribution_release }}'
+        uris: https://nvidia.github.io/libnvidia-container/stable/deb/amd64
+        suites: [/]
+        components: []
+        architectures: [amd64]
         signed_by: https://nvidia.github.io/libnvidia-container/gpgkey
-        state: present
 
     - name: 更新 apt 快取
       apt:
