@@ -27,26 +27,47 @@
     state: present
   when: pip_check.rc != 0
 
-- name: 檢查 Docker 是否已安裝
-  command: docker --version
-  register: docker_check
-  failed_when: false
-  changed_when: false
+- name: 清理舊的 APT 配置 (Debian/Ubuntu)
+  when: ansible_os_family == "Debian"
+  block:
+    - name: 移除舊的 NVIDIA GPG 金鑰 (如果存在)
+      apt_key:
+        url: https://nvidia.github.io/libnvidia-container/gpgkey
+        state: absent
+      failed_when: false
+
+    - name: 移除舊的 Docker GPG 金鑰 (如果存在)
+      apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: absent
+      failed_when: false
+
+    - name: 移除舊的儲存庫檔案 (如果存在)
+      file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - /etc/apt/sources.list.d/nvidia-container-toolkit.list
+        - /etc/apt/sources.list.d/docker.list
+      failed_when: false
 
 - name: 安裝 Docker (Debian/Ubuntu)
   when:
     - ansible_os_family == "Debian"
-    - docker_check.rc != 0
   block:
-    - name: 添加 Docker 儲存庫公鑰
-      apt_key:
-        url: https://download.docker.com/linux/ubuntu/gpg
-        state: present
-
     - name: 添加 Docker 儲存庫
-      apt_repository:
-        repo: deb [arch=amd64] https://download.docker.com/linux/{{ ansible_distribution | lower }} {{ ansible_distribution_release }} stable
-        state: present
+      deb822_repository:
+        name: docker
+        types: [deb]
+        uris: https://download.docker.com/linux/{{ ansible_distribution | lower }}
+        suites: ["{{ ansible_distribution_release }}"]
+        components: stable
+        architectures: amd64
+        signed_by: https://download.docker.com/linux/ubuntu/gpg
+
+    - name: 更新 apt 快取
+      apt:
+        update_cache: yes
 
     - name: 安裝 Docker 套件
       apt:
@@ -60,28 +81,22 @@
         name: docker
         executable: pip3
 
-- name: Check if nvidia-ctk binary exists
-  ansible.builtin.stat:
-    path: /usr/bin/nvidia-ctk
-  register: ctk_stat
 
 - name: 安裝 NVIDIA Container Toolkit (Debian/Ubuntu)
   when:
     - ansible_os_family == "Debian"
-    - not ctk_stat.stat.exists
   block:
-    - name: 添加 NVIDIA GPU 儲存庫公鑰
-      apt_key:
-        url: https://nvidia.github.io/libnvidia-container/gpgkey
-        state: present
-
     - name: 添加 NVIDIA Container Toolkit 儲存庫
-      get_url:
-        url: https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list
-        dest: /etc/apt/sources.list.d/nvidia-container-toolkit.list
-        mode: '0644'
+      deb822_repository:
+        name: nvidia-container-toolkit
+        types: deb
+        uris: https://nvidia.github.io/libnvidia-container/stable/deb/amd64
+        suites: [/]
+        components: []
+        architectures: [amd64]
+        signed_by: https://nvidia.github.io/libnvidia-container/gpgkey
 
-    - name: 更新 apt 套件索引
+    - name: 更新 apt 快取
       apt:
         update_cache: yes
 
@@ -94,6 +109,7 @@
 - name: 檢查 Docker 是否已配置 NVIDIA Container Runtime
   command: docker info
   register: docker_runtimes_check
+  changed_when: false
 
 - name: 重新配置 Docker 以支援 NVIDIA Container Runtime
   when:
@@ -101,6 +117,7 @@
   block:
     - name: 配置 Docker
       command: nvidia-ctk runtime configure --runtime=docker
+      changed_when: true
 
     - name: 重新啟動 Docker 服務以套用 NVIDIA Container Runtime 配置
       systemd:
@@ -134,6 +151,7 @@
   command: docker rm -f dcgm-exporter
   when: dcgm_exporter_container.stdout != ""
   failed_when: false
+  changed_when: dcgm_exporter_container.stdout != ""
 
 - name: 運行 DCGM-Exporter Docker 容器
   community.docker.docker_container:
