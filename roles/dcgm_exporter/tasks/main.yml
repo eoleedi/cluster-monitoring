@@ -33,6 +33,39 @@
 #   failed_when: false
 #   changed_when: false
 
+- name: 清理舊的 APT 配置 (Debian/Ubuntu)
+  when: ansible_os_family == "Debian"
+  block:
+    - name: 移除舊的 NVIDIA GPG 金鑰 (如果存在)
+      apt_key:
+        url: https://nvidia.github.io/libnvidia-container/gpgkey
+        state: absent
+      failed_when: false
+
+    - name: 移除舊的 Docker GPG 金鑰 (如果存在)
+      apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: absent
+      failed_when: false
+
+    - name: 移除舊的儲存庫檔案 (如果存在)
+      file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - /etc/apt/sources.list.d/nvidia-container-toolkit.list
+        - /etc/apt/sources.list.d/docker.list
+      failed_when: false
+
+    - name: 移除可能衝突的 Docker 儲存庫檔案
+      file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - /etc/apt/sources.list.d/docker.sources
+        - /etc/apt/sources.list.d/nvidia-container-toolkit.sources
+      failed_when: false
+
 - name: 安裝 Docker (Debian/Ubuntu)
   when:
     - ansible_os_family == "Debian"
@@ -81,30 +114,6 @@
 #   ansible.builtin.stat:
 #     path: /usr/bin/nvidia-ctk
 #   register: ctk_stat
-
-- name: 移除舊的 NVIDIA GPG 金鑰 (如果存在)
-  apt_key:
-    url: https://nvidia.github.io/libnvidia-container/gpgkey
-    state: absent
-  when: ansible_os_family == "Debian"
-  failed_when: false
-
-- name: 移除舊的 Docker GPG 金鑰 (如果存在)
-  apt_key:
-    url: https://download.docker.com/linux/ubuntu/gpg
-    state: absent
-  when: ansible_os_family == "Debian"
-  failed_when: false
-
-- name: 移除舊的儲存庫檔案 (如果存在)
-  file:
-    path: "{{ item }}"
-    state: absent
-  loop:
-    - /etc/apt/sources.list.d/nvidia-container-toolkit.list
-    - /etc/apt/sources.list.d/docker.list
-  when: ansible_os_family == "Debian"
-  failed_when: false
 
 - name: 安裝 NVIDIA Container Toolkit (Debian/Ubuntu)
   when:
