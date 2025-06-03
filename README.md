@@ -5,6 +5,7 @@
 - 在所有節點上安裝 Node Exporter
 - 在所有節點上安裝 DCGM Exporter & Docker
 - 在主要監控伺服器上使用 Docker 安裝 Prometheus 和 Grafana
+- 可選的 NUT Exporter（用於 UPS 監控）
 - 自動配置所有組件互相連接
 
 ## 專案結構
@@ -134,7 +135,8 @@ node3 ansible_host=<節點3 IP>
 
 ### 3. 配置變數（Optional）
 
-如需調整配置，編輯 `group_vars/all.yml` 檔案：
+如需調整配置，編輯 `group_vars/all.yml` 檔案。
+
 
 ### 4. 修改 Grafana 以及 Prometheus 密碼
 
@@ -144,6 +146,9 @@ node3 ansible_host=<節點3 IP>
    # group_vars/monitoring/vault.yml
    vault_prometheus_password: PASSWORD
    vault_grafana_password: PASSWORD
+   # 如果啟用了 NUT Exporter，請同時設定以下憑證：
+   vault_nut_exporter_user: "your_ups_username"
+   vault_nut_exporter_password: "your_ups_password"
 
    # group_vars/nodes/vault.yml
    vault_monitoring_public_ip: ""
@@ -185,6 +190,40 @@ Note: 這邊會要求輸入 sudo 密碼和 vault 密碼。
 - 注意：DCGM Exporter 需要 NVIDIA 驅動和 Docker 支持
 - 參考文件: [DCGM Exporter](https://github.com/NVIDIA/dcgm-exporter)
 
+### NUT Exporter（UPS 監控）
+
+- 可選功能：監控 UPS（不斷電系統）的狀態和指標
+- 部署在監控伺服器上的 Docker 容器中
+- 監控端口：9199
+
+#### 啟用 NUT Exporter
+
+1. 在 `group_vars/monitoring/vault.yml` 中配置 UPS 憑證：
+
+   ```yaml
+   vault_nut_exporter_user: "your_ups_username"
+   vault_nut_exporter_password: "your_ups_password"
+   ```
+
+#### NUT Exporter 監控指標
+
+NUT Exporter 會收集以下 UPS 指標：
+
+- 電池電量百分比 (battery.charge)
+- 電池剩餘時間 (battery.runtime)
+- 電池電壓 (battery.voltage)
+- 輸入電壓 (input.voltage)
+- 輸出電壓 (output.voltage)
+- UPS 負載百分比 (ups.load)
+- UPS 狀態 (ups.status)
+- UPS 額定功率 (ups.realpower.nominal)
+
+#### 注意事項
+
+- 確保 UPS 伺服器上已安裝和配置 NUT (Network UPS Tools)
+- UPS 必須支援 SNMP 或其他 NUT 支援的通訊協定
+- 參考文件: [NUT Exporter](https://github.com/DRuggeri/nut_exporter)
+
 ### 監控伺服器部署
 
 - 在 `[monitoring]` 群組中的伺服器上安裝 Docker 和 Docker Compose
@@ -202,6 +241,8 @@ Note: 這邊會要求輸入 sudo 密碼和 vault 密碼。
 - **Grafana**: `https://<監控伺服器IP>:3000`
   - 用戶名: `smil`
   - 密碼: <vault.yml 中配置的密碼>
+- **NUT Exporter**: `http://<監控伺服器IP>:9199` (如果已啟用)
+  - 提供 UPS 狀態指標，通常透過 Prometheus 和 Grafana 查看
 
 ## 故障排除
 
@@ -220,6 +261,13 @@ Note: 這邊會要求輸入 sudo 密碼和 vault 密碼。
 3. **Grafana 無法顯示數據**
    - 確認 Prometheus 資料源已正確配置
    - 檢查 Grafana 日誌: `docker logs <grafana-container-id>`
+
+4. **NUT Exporter 無法收集 UPS 數據**
+   - 確認 `nut_exporter_enabled: true` 已在 `group_vars/all.yml` 中設定
+   - 檢查 NUT Exporter 容器狀態: `docker ps | grep nut-exporter`
+   - 檢查 NUT Exporter 日誌: `docker logs <nut-exporter-container-id>`
+   - 確認 UPS 伺服器上的 NUT 服務正在運行
+   - 驗證 UPS 憑證設定正確
 
 ## 自訂與擴展
 
