@@ -49,6 +49,7 @@
       loop:
         - /etc/apt/sources.list.d/nvidia-container-toolkit.list
         - /etc/apt/sources.list.d/docker.list
+        - /etc/apt/sources.list.d/download_docker_com_linux_ubuntu.list
       failed_when: false
 
 - name: 安裝 Docker (Debian/Ubuntu)
