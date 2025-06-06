@@ -74,7 +74,7 @@ cluster-monitoring/
 - 安裝passlib:
 
   ```bash
-    /home/<username>/.local/pipx/venvs/ansible-core/bin/pip3 install passlib
+    pipx inject ansible-core passlib
   ```
 
 - 目標伺服器為 Linux 系統 (Debian/Ubuntu)
