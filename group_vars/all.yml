@@ -58,6 +58,10 @@ grafana_server_domain: "{{vault_grafana_server_domain}}"
 grafana_server_root_url: "{{vault_grafana_server_root_url}}"
 grafana_strict_transport_security: "false"
 
+# Monitoring SSL
+monitoring_organization: SMIL
+monitoring_country: TW
+
 # Monitoring 伺服器設定
 monitoring_data_dir: /opt/monitoring
 
