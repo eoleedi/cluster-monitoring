@@ -175,8 +175,7 @@
   cron:
     name: Collect GPU process memory metrics
     job: /opt/node_exporter/textcollector/gpu_process_memory_metrics.sh > /opt/node_exporter/textcollector/gpu_process_memory_metrics.prom
-    minute: "*"
-    second: "*/30"
+    minute: "*" # Run every minute
 
 - name: Restart Node Exporter to apply changes
   service:
