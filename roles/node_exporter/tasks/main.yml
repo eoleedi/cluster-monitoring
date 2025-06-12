@@ -128,6 +128,12 @@
     msg: "Node Exporter 服務狀態: {{ service_state.ansible_facts.services['node_exporter.service'].state }}"
   when: "'node_exporter.service' in service_state.ansible_facts.services"
 
+- name: Ensure textcollector directory exists for Node Exporter
+  file:
+    path: /opt/node_exporter/textcollector
+    state: directory
+    mode: 0755
+
 - name: Create GPU process memory metrics script for textcollector
   copy:
     dest: /opt/node_exporter/textcollector/gpu_process_memory_metrics.sh
