@@ -4,6 +4,7 @@
 
 - 在所有節點上安裝 Node Exporter
 - 在所有節點上安裝 DCGM Exporter & Docker
+- GPU 進程層級監控（追蹤個別進程的 GPU 記憶體使用情況）
 - 在主要監控伺服器上使用 Docker 安裝 Prometheus 和 Grafana
 - 可選的 NUT Exporter（用於 UPS 監控）
 - 自動配置所有組件互相連接
@@ -190,6 +191,28 @@ Note: 這邊會要求輸入 sudo 密碼和 vault 密碼。
 - 注意：DCGM Exporter 需要 NVIDIA 驅動和 Docker 支持
 - 參考文件: [DCGM Exporter](https://github.com/NVIDIA/dcgm-exporter)
 
+#### GPU 進程監控功能
+
+本系統新增了 GPU 進程層級的監控功能，提供以下額外監控能力：
+
+- **進程級 GPU 記憶體使用率監控**：追蹤每個使用 GPU 的進程的記憶體消耗
+- **使用者活動監控**：識別哪些使用者正在使用 GPU 資源
+- **進程命令識別**：顯示正在使用 GPU 的具體程式或指令
+- **實時監控**：每分鐘更新一次 GPU 進程資訊
+
+監控指標包括：
+
+- `gpu_process_memory_used`：單一進程的 GPU 記憶體使用量（MiB）
+  - 標籤：`pid`（進程ID）、`gpu_uuid`（GPU唯一識別碼）、`user`（使用者）、`cmd`（指令名稱）
+
+這些指標會自動整合到現有的 Grafana 儀表板中，包括：
+
+- **GPU 單機監控**：顯示每個 GPU 上的進程記憶體使用狀況
+- **GPU 總覽**：統計各使用者的 GPU 使用情況和進程數量
+- 支援按使用者過濾和跳轉至詳細進程狀態
+
+此功能利用了 `gpu_process_memory_metrics.sh` 腳本，使用 Cron 定期收集 GPU 進程資訊並生成 Prometheus 格式的指標檔案，並透過 Node Exporter 的 text collector 功能提供給 Prometheus。
+
 ### NUT Exporter（UPS 監控）
 
 - 可選功能：監控 UPS（不斷電系統）的狀態和指標
@@ -262,7 +285,29 @@ NUT Exporter 會收集以下 UPS 指標：
    - 確認 Prometheus 資料源已正確配置
    - 檢查 Grafana 日誌: `docker logs <grafana-container-id>`
 
-4. **NUT Exporter 無法收集 UPS 數據**
+4. **GPU 進程監控無法顯示數據**
+   - 確認節點上已安裝 NVIDIA 驅動程序：`nvidia-smi`
+   - 檢查 GPU 進程監控腳本是否正常執行：
+
+     ```bash
+     /opt/node_exporter/textcollector/gpu_process_memory_metrics.sh
+     ```
+
+   - 驗證生成的指標檔案：
+
+     ```bash
+     cat /opt/node_exporter/textcollector/gpu_process_memory_metrics.prom
+     ```
+
+   - 檢查 cron 任務是否正在運行：
+
+     ```bash
+     crontab -l
+     ```
+
+   - 如果沒有 GPU 進程在運行，指標檔案可能會是空的（這是正常行為）
+
+5. **NUT Exporter 無法收集 UPS 數據**
    - 確認 `nut_exporter_enabled: true` 已在 `group_vars/all.yml` 中設定
    - 檢查 NUT Exporter 容器狀態: `docker ps | grep nut-exporter`
    - 檢查 NUT Exporter 日誌: `docker logs <nut-exporter-container-id>`
