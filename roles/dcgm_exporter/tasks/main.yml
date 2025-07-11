@@ -154,6 +154,12 @@
   failed_when: false
   changed_when: dcgm_exporter_container.stdout != ""
 
+- name: 複製 counters.csv 到 DCGM-Exporter 目錄
+  copy:
+    src: roles/dcgm_exporter/files/custom-counters.csv
+    dest: "{{ dcgm_exporter_dir }}/custom-counters.csv"
+    mode: '0644'
+
 - name: 運行 DCGM-Exporter Docker 容器
   community.docker.docker_container:
     name: dcgm-exporter
@@ -165,6 +171,13 @@
       - SYS_ADMIN
     published_ports:
       - 9400:9400
+    mounts:
+      - source: "{{ dcgm_exporter_dir }}/custom-counters.csv"
+        target: /etc/dcgm-exporter/custom-counters.csv
+        type: bind
+    env:
+      DCGM_EXPORTER_COLLECTORS: /etc/dcgm-exporter/custom-counters.csv
+
 
 - name: Drop other traffic
   ansible.builtin.iptables:
