@@ -66,7 +66,8 @@
   copy:
     content: |
       ARGS="--web.listen-address={{ node_exporter_web_listen_address }} \
-            {% for collector in node_exporter_enabled_collectors %}--collector.{{ collector }} {% endfor %}"
+            {% for collector in node_exporter_enabled_collectors %}--collector.{{ collector }} {% endfor %} \
+            --collector.textfile.directory=/opt/node_exporter/textcollector"
     dest: /etc/node_exporter/node_exporter.conf
     mode: 0644
     owner: node_exporter
@@ -126,3 +127,57 @@
   debug:
     msg: "Node Exporter 服務狀態: {{ service_state.ansible_facts.services['node_exporter.service'].state }}"
   when: "'node_exporter.service' in service_state.ansible_facts.services"
+
+- name: Ensure textcollector directory exists for Node Exporter
+  file:
+    path: /opt/node_exporter/textcollector
+    state: directory
+    mode: 0755
+
+- name: Create GPU process memory metrics script for textcollector
+  copy:
+    dest: /opt/node_exporter/textcollector/gpu_process_memory_metrics.sh
+    content: |
+      #!/bin/bash
+
+      echo "# HELP gpu_process_memory_used GPU memory used by process in MiB"
+      echo "# TYPE gpu_process_memory_used gauge"
+
+      # Run nvidia-smi to get GPU process info in CSV
+      nvidia-smi --query-compute-apps=pid,gpu_uuid,used_memory --format=csv,noheader,nounits | while IFS=',' read -r pid uuid mem
+      do
+        # Remove whitespace
+        pid=$(echo "$pid" | xargs)
+        uuid=$(echo "$uuid" | xargs)
+        mem=$(echo "$mem" | xargs)
+
+        # Skip if pid is not numeric
+        if ! [[ "$pid" =~ ^[0-9]+$ ]]; then
+          continue
+        fi
+
+        # Get process owner and command
+        if ps -p "$pid" > /dev/null 2>&1; then
+          user=$(ps -o user= -p "$pid" | xargs)
+          cmd=$(ps -o comm= -p "$pid" | xargs)
+
+          # Sanitize labels
+          user=${user//\"/}
+          cmd=${cmd//\"/}
+
+          # Output in Prometheus metric format
+          echo "gpu_process_memory_used{pid=\"$pid\",gpu_uuid=\"$uuid\",user=\"$user\",cmd=\"$cmd\"} $mem"
+        fi
+      done
+    mode: 0755
+
+- name: Schedule GPU process memory metrics collection
+  cron:
+    name: Collect GPU process memory metrics
+    job: /opt/node_exporter/textcollector/gpu_process_memory_metrics.sh > /opt/node_exporter/textcollector/gpu_process_memory_metrics.prom
+    minute: "*" # Run every minute
+
+- name: Restart Node Exporter to apply changes
+  service:
+    name: node_exporter
+    state: restarted
