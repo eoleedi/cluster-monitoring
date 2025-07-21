@@ -56,9 +56,12 @@ scrape_configs:
       - targets: ['{{ hostvars[host].ansible_host }}']
         labels:
           ups: '{{ hostvars[host].inventory_hostname }}'
+          ups_real_name: '{{ hostvars[host].ups_real_name | default(hostvars[host].inventory_hostname) }}'
 {% endfor %}
     metrics_path: /ups_metrics
     relabel_configs:
+      - source_labels: [ups_real_name]
+        target_label: __param_ups
       - source_labels: [__address__]
         target_label: __param_server
       - source_labels: [__param_server]
