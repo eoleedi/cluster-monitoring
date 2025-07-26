@@ -80,7 +80,7 @@ nut_exporter_variables: >-
 
 
 # IPMI Exporter 設定
-ipmi_exporter_version: v1.10.1
+ipmi_exporter_version: 1.10.1
 ipmi_exporter_image: prometheuscommunity/ipmi-exporter:{{ ipmi_exporter_version }}
 ipmi_exporter_port: 9290
 ipmi_exporter_firewall_allow_from:

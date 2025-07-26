@@ -11,11 +11,32 @@
   roles:
     - dcgm_exporter
 
-- name: 安裝 IPMI Exporter 到所有節點
+- name: Configure IPMI exporter
+  hosts: ipmi
+  tags: ipmi_exporter
+  tasks:
+    - name: Create sudoers file
+      ansible.builtin.copy:
+        src: ipmi_exporter.sudoers
+        dest: /etc/sudoers.d/ipmi_exporter
+        mode: '0400'
+
+- name: Install IPMI Exporter Locally
   hosts: ipmi
   tags: ipmi_exporter
   roles:
-    - ipmi_exporter
+    - prometheus.prometheus.ipmi_exporter
+  vars:
+    ipmi_exporter_modules:
+      default:
+        collectors:
+          - bmc
+          - ipmi
+          - dcmi
+          - chassis
+          - sel
+    ipmi_exporter_system_user: root
+    ipmi_exporter_system_group: root
 
 - name: 安裝 Prometheus 和 Grafana 到監控伺服器
   hosts: monitoring
