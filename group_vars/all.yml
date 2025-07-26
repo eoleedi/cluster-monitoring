@@ -77,3 +77,12 @@ nut_exporter_user: "{{ vault_nut_exporter_user }}"
 nut_exporter_password: "{{ vault_nut_exporter_password }}"
 nut_exporter_variables: >-
   battery.charge,battery.runtime,battery.voltage,battery.voltage.nominal,input.voltage,input.voltage.nominal,output.voltage,ups.load,ups.status,ups.realpower.nominal
+
+
+# IPMI Exporter 設定
+ipmi_exporter_version: v1.10.1
+ipmi_exporter_image: prometheuscommunity/ipmi-exporter:{{ ipmi_exporter_version }}
+ipmi_exporter_port: 9290
+ipmi_exporter_firewall_allow_from:
+  - "{{ hostvars[groups['monitoring'][0]].ansible_host }}" # 允許監控伺服器的私有 IP 訪問
+  - "{{vault_monitoring_public_ip}}" # 添加監控伺服器的公共 IP 地址

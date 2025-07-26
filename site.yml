@@ -11,6 +11,12 @@
   roles:
     - dcgm_exporter
 
+- name: 安裝 IPMI Exporter 到所有節點
+  hosts: ipmi
+  tags: ipmi_exporter
+  roles:
+    - ipmi_exporter
+
 - name: 安裝 Prometheus 和 Grafana 到監控伺服器
   hosts: monitoring
   connection: local
