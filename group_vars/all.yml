@@ -24,7 +24,8 @@ dcgm_exporter_dir: /opt/dcgm-exporter
 
 # Prometheus 和 Grafana 設定
 prometheus_version: v3.3.0
-prometheus_retention_time: 15d
+prometheus_retention_time: 180d
+prometheus_retention_size: 50GB
 prometheus_scrape_interval: 15s
 prometheus_evaluation_interval: 15s
 prometheus_storage_path: /prometheus
